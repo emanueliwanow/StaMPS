@@ -30,7 +30,7 @@ phname=['pscands.1.ph'];            % for each PS candidate, a float complex val
 ijname=['pscands.1.ij'];            % ID# Azimuth# Range# 1 line per PS candidate
 bperpname=['bperp.1.in'];           % in meters 1 line per ifg
 dayname=['day.1.in'];               % YYYYMMDD, 1 line per ifg
-masterdayname=['master_day.1.in'];  % YYYYMMDD
+referencedayname=['reference_day.1.in'];  % YYYYMMDD
 llname=['pscands.1.ll'];            % 2 float values (lon and lat) per PS candidate
 daname=['pscands.1.da'];            % 1 float value per PS candidate
 hgtname=['pscands.1.hgt'];          % 1 float value per PS candidate
@@ -57,30 +57,30 @@ day=load(dayname);
 year=floor(day/10000);
 month=floor((day-year*10000)/100);
 monthday=day-year*10000-month*100;
-slave_day=datenum(year,month,monthday);
-[slave_day,day_ix]=sort(slave_day);
+secondary_day=datenum(year,month,monthday);
+[secondary_day,day_ix]=sort(secondary_day);
 
-if ~exist(masterdayname,'file')
-    masterdayname= ['../',masterdayname];
+if ~exist(referencedayname,'file')
+    referencedayname= ['../',referencedayname];
 end
-master_day=load(masterdayname);
-master_day_yyyymmdd=master_day;
-year=floor(master_day/10000);
-month=floor((master_day-year*10000)/100);
-monthday=master_day-year*10000-month*100;
-master_day=datenum(year,month,monthday);
+reference_day=load(referencedayname);
+reference_day_yyyymmdd=reference_day;
+year=floor(reference_day/10000);
+month=floor((reference_day-year*10000)/100);
+monthday=reference_day-year*10000-month*100;
+reference_day=datenum(year,month,monthday);
 
-master_ix=sum(slave_day<master_day)+1;
-day=[slave_day(1:master_ix-1);master_day;slave_day(master_ix:end)]; % insert master day
+reference_ix=sum(secondary_day<reference_day)+1;
+day=[secondary_day(1:reference_ix-1);reference_day;secondary_day(reference_ix:end)]; % insert reference day
 
 
-%% bperp one value per slave
+%% bperp one value per secondary
 if ~exist(bperpname,'file')
     bperpname= ['../',bperpname];
 end
 bperp=load(bperpname); 
 bperp=bperp(day_ix);
-bperp=[bperp(1:master_ix-1);0;bperp(master_ix:end)]; % insert master-master bperp (zero)
+bperp=[bperp(1:reference_ix-1);0;bperp(reference_ix:end)]; % insert reference-reference bperp (zero)
 n_ifg=size(bperp,1);
 n_image=n_ifg;
 
@@ -118,16 +118,19 @@ if exist(calname,'file')
             if isempty(bb)
                 bb=str2num(aa{end-1}(1:8));
             end
+            if isempty(bb)
+                bb=str2num(aa{end-2}(end-7:end));
+            end
         catch
-            if strcmpi(aa{end-1},'master');
+            if strcmpi(aa{end-1},'reference');
                 bb=str2num(aa{end-2}(end-7:end));
             end            
         end
         caldate(i)=bb;    
     end
-    not_master_ix=caldate~=master_day_yyyymmdd;
-    caldate=caldate(not_master_ix);
-    calconst=calconst(not_master_ix);
+    not_reference_ix=caldate~=reference_day_yyyymmdd;
+    caldate=caldate(not_reference_ix);
+    calconst=calconst(not_reference_ix);
     [Y,I]=sort(caldate);
     calconst=calconst(I);
 else
@@ -147,7 +150,7 @@ ph=ph(:,day_ix);
 zero_ph=sum(ph==0,2);
 nonzero_ix=zero_ph<=1;       % if more than 1 phase is zero, drop node
 ph=ph./repmat(calconst',n_ps,1);  % scale amplitudes
-ph=[ph(:,1:master_ix-1),ones(n_ps,1),ph(:,master_ix:end)]; % insert zero phase master-master ifg
+ph=[ph(:,1:reference_ix-1),ones(n_ps,1),ph(:,reference_ix:end)]; % insert zero phase reference-reference ifg
 
 
 %% LON LAT
@@ -193,7 +196,7 @@ ij(:,1)=1:n_ps;
 lonlat=lonlat(sort_ix,:);
 
 savename=['ps',num2str(psver)];
-stamps_save(savename,ij,lonlat,xy,bperp,day,master_day,master_ix,n_ifg,n_image,n_ps,sort_ix,ll0,calconst,master_ix,day_ix);
+stamps_save(savename,ij,lonlat,xy,bperp,day,reference_day,reference_ix,n_ifg,n_image,n_ps,sort_ix,ll0,calconst,reference_ix,day_ix);
 save psver psver
 
 phsavename=['ph',num2str(psver)];
@@ -288,10 +291,10 @@ if isempty(bperpdir)
     updir=1;
 end
 if length(bperpdir)>0
-    % make a set of baseline excluding the master
+    % make a set of baseline excluding the reference
     bperp_mat=zeros(n_ps,n_image-1,'single');
     counter =1;
-    for i=setdiff([1:n_image],master_ix);
+    for i=setdiff([1:n_image],reference_ix);
         bperp_fname=['..' filesep 'baselineGRID_' datestr(day(i),'yyyymmdd')];
         if updir==1
             bperp_fname=['..' filesep bperp_fname];
@@ -319,7 +322,7 @@ if length(bperpdir)>0
         counter = counter+1;
     end
 else
-    bperp_mat=repmat(single(bperp([1:master_ix-1,master_ix+1:end]))',n_ps,1);
+    bperp_mat=repmat(single(bperp([1:reference_ix-1,reference_ix+1:end]))',n_ps,1);
 end
 bpsavename=['bp',num2str(psver)];
 stamps_save(bpsavename,bperp_mat);
