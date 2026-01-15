@@ -89,7 +89,7 @@ end
 
 day=ps.day;
 bperp=ps.bperp;
-master_day=ps.master_day;
+reference_day=ps.reference_day;
 
 if isfield(sl,'keep_ix')
     ix2=sl.ix(sl.keep_ix);
@@ -335,7 +335,7 @@ if n_ps~=0
         ph_weed=ph2(ix_weed,:).*exp(-j*(K_ps2(ix_weed)*bperp'));  % subtract range error 
         ph_weed=ph_weed./abs(ph_weed);
         if ~strcmpi(small_baseline_flag,'y')
-            ph_weed(:,ps.master_ix)=exp(j*(C_ps2(ix_weed)));  % add master noise
+            ph_weed(:,ps.reference_ix)=exp(j*(C_ps2(ix_weed)));  % add reference noise
         end
         edge_std=zeros(n_edge,1);
         edge_max=zeros(n_edge,1);
