@@ -6,11 +6,11 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %            CBAR_FLAG,TEXTSIZE,TEXTCOLOR,LON_RG,LAT_RG,UNITS) 
 %
 %    In the case of phase, +ve values imply displacement away from the satellite
-%       when the master is earlier than the slave.
+%       when the reference is earlier than the slave.
 %    In the case of velocities, +ve values are towards the satellite.
 %
 %    an invalid VALUE_TYPE related to double removing of atmosphere:
-%    anything when removing master and estimated tropospheric signals: 'ma'
+%    anything when removing reference and estimated tropospheric signals: 'ma'
 %
 %    valid VALUE_TYPE's are:
 %%%% BASIC
@@ -22,7 +22,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %    'rsb'  for residual between unwrapped phase of sb ifgs and inverted
 %    'd'    for spatially correlated DEM error (rad/m) estimated from SM or from SB depending on your processing
 %    'D'    for spatially correlated DEM error (rad/m) from SM inverted data when using SB
-%    'm'    for AOE phase due to master
+%    'm'    for AOE phase due to reference
 %    'o'    for orbital ramps 
 %    's'    for atmosphere and orbit error (AOE) phase due to slave (not compatible with 'a')
 %    'a'*   for stratisfied topo-correlated atmosphere using TRAIN dependency. 
@@ -51,7 +51,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %    'w-o'  for wrapped phase minus orbital ramps
 %           also 'w-dm','w-do','w-dmo'
 %    'u-d'  for unwrapped phase minus dem error  
-%    'u-m'  for unwrapped phase minus and master AOE  
+%    'u-m'  for unwrapped phase minus and reference AOE  
 %    'u-o'  for unwrapped phase minus orbital ramps 
 %    'u-a'  for unwrapped phase minus stratisfied topo-correlated atmosphere
 %           also 'u-dm','u-do','u-da','u-ao','u-dmo','u-dma','u-dms','u-dmao','u-dmos'
@@ -73,7 +73,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 % 
 %    When the wrapped interferograms are small baseline, 'v' and 'd' plots
 %    are calulated from the unwraped small baseline interferograms by 
-%    default. To force use of the single master interferograms, capitalise
+%    default. To force use of the single reference interferograms, capitalise
 %    e.g. ps_plot('V-D')
 %    
 %    BACKGROUND = -1 outputs the data to a .mat file instead of plotting
@@ -88,7 +88,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %    PHASE_LIMS = 1x2 vector with colormap limits (or 0 for default) 
 %                 defaults to the range of the plotted phase 
 %
-%    REF_IFG = number of interferogram to reference to - defaults to 0 (master)
+%    REF_IFG = number of interferogram to reference to - defaults to 0 (reference)
 %              -1 for incremental referencing
 %
 %    IFG_LIST = list of interferograms to plot - defaults to [] (all)
@@ -96,7 +96,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %    N_X = maximum number of images to plot per row 
 %          defaults to 0 (find optimum based on image size)
 %
-%    CBAR_FLAG = colorbar flag - defaults to 0 (plot on master, if plotted)
+%    CBAR_FLAG = colorbar flag - defaults to 0 (plot on reference, if plotted)
 %                 1 = don't plot a colorbar
 %                 2 = plot a colorbar underneath
 %
@@ -167,7 +167,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %   03/2011 AH: Save files to home directory if read only directory
 %   03/2011 DB: Remove raster lines when plotting time series
 %   10/2011 AH: Check that pm file exists before attempting to load
-%   01/2012 AH: Subtract master AOE for 'ts' plot
+%   01/2012 AH: Subtract reference AOE for 'ts' plot
 %   01/2012 AH: Remove code to subtract SULA error from 'd' plots
 %   12/2012 AH: plot raw phase if psver=1
 %   01/2013 DB: Fix plotting of data in case of SB directory
@@ -213,7 +213,7 @@ function [h_fig,lims,ifg_data_RMSE,h_axes_all]=ps_plot(value_type,varargin)
 %   03/2015 DB: Update and clean for relaese with TRAIN
 %   05/2015 DB: Fix to separate hgt from t options
 %   12/2016 DB: Update output syntax, remove warning ps_plot('V-Do')
-%   06/2016 DB: Fix in case the master is still included in SM inversion
+%   06/2016 DB: Fix in case the reference is still included in SM inversion
 %   11/2017 DB: Updating the TRAIN plotting conventions and adding new options
 %               Only let ts option run through for option ('v') and ('V')
 %   11/2017 DB: make the s option work again
@@ -321,12 +321,12 @@ meanvname=['./mv',num2str(psver)];
 
 ps=load(psname);
 day=ps.day;
-master_day=ps.master_day;
+reference_day=ps.reference_day;
 xy=ps.xy;
 lonlat=ps.lonlat;
 n_ps=ps.n_ps;
 n_ifg=ps.n_ifg;
-master_ix=sum(day<master_day)+1;
+reference_ix=sum(day<reference_day)+1;
 ref_ps=0;    
 drop_ifg_index=getparm('drop_ifg_index');
 small_baseline_flag=getparm('small_baseline_flag');
@@ -339,9 +339,9 @@ if aps_band_flag==1
     drop_ifg_index = [];
     % put the colorbar at the first chosen frequency band
     if isempty(ifg_list)~=1
-        master_ix = ifg_list(1);
+        reference_ix = ifg_list(1);
     else
-        master_ix = 1;
+        reference_ix = 1;
     end
     % getting the spatial extends of the bands
     if exist('parms_aps.mat')==2
@@ -787,7 +787,7 @@ switch(group_type)
         % subtract of oscialtor drift in case of envisat
         ph_all = ph_all.*exp(-j*ph_unw_eni_osci);
         
-        ph_all(:,ps.master_ix)=1;
+        ph_all(:,ps.reference_ix)=1;
         if ref_ifg~=0
             ph_all=ph_all.*conj(repmat(rc.ph_reref(:,ref_ifg),1,n_ifg));
         end
@@ -813,7 +813,7 @@ switch(group_type)
             fprintf('Warning: note that the oscilator drift is also removed, make sure that the ramp is estimated after correction \n')
         end
         
-        ph_all(:,ps.master_ix)=1;
+        ph_all(:,ps.reference_ix)=1;
         if ref_ifg~=0
             ph_all=ph_all.*conj(repmat(rc.ph_reref(:,ref_ifg),1,n_ifg));
         end
@@ -1027,7 +1027,7 @@ switch(group_type)
         clear uw scn scla
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
-        ph_all(:,ps.master_ix)=0;
+        ph_all(:,ps.reference_ix)=0;
         ref_ps=ps_setref;
         fig_name = 'u-dms';
     case {'u-dm'}
@@ -1039,7 +1039,7 @@ switch(group_type)
         ph_all=uw.ph_uw - repmat(scla.C_ps_uw,1,size(uw.ph_uw,2)) - scla.ph_scla;
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla
         ref_ps=ps_setref;
         fig_name = 'u-dm';
@@ -1052,7 +1052,7 @@ switch(group_type)
         ph_all = ph_all-ph_unw_eni_osci;
         % deramping ifgs
         [ph_all] = ps_deramp(ps,ph_all);
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla
         ref_ps=ps_setref;
         fig_name = 'u-dmo';
@@ -1066,7 +1066,7 @@ switch(group_type)
         ph_all=uw.ph_uw - scla.ph_scla - aps_corr;
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla aps aps_corr
         ref_ps=ps_setref;
         
@@ -1083,7 +1083,7 @@ switch(group_type)
         ph_all=uw.ph_uw - scla.ph_scla - aps_corr - iono_corr;
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla aps aps_corr
         ref_ps=ps_setref;
         
@@ -1101,7 +1101,7 @@ switch(group_type)
         ph_all=uw.ph_uw - scla.ph_scla - aps_corr - iono_corr- tide.ph_tide;
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla aps aps_corr
         ref_ps=ps_setref;
  
@@ -1120,7 +1120,7 @@ switch(group_type)
         ph_all = ph_all-ph_unw_eni_osci;
         % deramping ifgs
         [ph_all] = ps_deramp(ps,ph_all);
-        ph_all(:,ps.master_ix)=0;
+        ph_all(:,ps.reference_ix)=0;
         ref_ps=ps_setref;
         fig_name = 'u-dms';
     case {'u-a'}
@@ -1133,7 +1133,7 @@ switch(group_type)
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
         if aps_band_flag~=1
-            ph_all(:,master_ix)=0;
+            ph_all(:,reference_ix)=0;
         end
         clear uw aps aps_corr
         ref_ps=ps_setref;
@@ -1149,7 +1149,7 @@ switch(group_type)
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
         if aps_band_flag~=1
-            ph_all(:,master_ix)=0;
+            ph_all(:,reference_ix)=0;
         end
         clear uw aps aps_corr
         ref_ps=ps_setref;  
@@ -1165,7 +1165,7 @@ switch(group_type)
         % subtract of oscialtor drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
         if aps_band_flag~=1
-            ph_all(:,master_ix)=0;
+            ph_all(:,reference_ix)=0;
         end
         % deramping ifgs
         [ph_all] = ps_deramp(ps,ph_all);
@@ -1181,7 +1181,7 @@ switch(group_type)
         ph_all=uw.ph_uw;
         ph_all=uw.ph_uw - aps_corr - scla.ph_scla;
         if aps_band_flag~=1
-            ph_all(:,master_ix)=0;
+            ph_all(:,reference_ix)=0;
         end
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
@@ -1255,7 +1255,7 @@ switch(group_type)
         scla=load(sclaname);
         ph_all=uw.ph_uw;
         ph_all=uw.ph_uw - repmat(scla.C_ps_uw,1,size(uw.ph_uw,2));
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
@@ -1279,7 +1279,7 @@ switch(group_type)
         fig_name = ['u-i' fig_name_ica];
         fig_name = [fig_name fig_name_suffix];
         ph_all=uw.ph_uw - iono_corr;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
@@ -1329,7 +1329,7 @@ switch(group_type)
         scn=load(scnname);
         ph_all=uw.ph_uw;
         ph_all=uw.ph_uw - scn.ph_scn_slave;
-        ph_all(:,master_ix)=0;
+        ph_all(:,reference_ix)=0;
         clear uw scla
         % subtract of oscilator drift in case of envisat
         ph_all = ph_all-ph_unw_eni_osci;
@@ -1338,7 +1338,7 @@ switch(group_type)
         fig_name = 'u-s';
     case {'m'}
         %scn=load(scnname);
-        %ph_all=scn.ph_scn_master;
+        %ph_all=scn.ph_scn_reference;
         %clear scn
         scla=load(sclaname);
         ph_all=scla.C_ps_uw;
@@ -1379,7 +1379,7 @@ switch(group_type)
         case {'v-d'}
             scla=load(sclaname);
             if isfield(scla,'C_ps_uw')
-                ph_uw=ph_uw - scla.ph_scla - repmat(scla.C_ps_uw,1,size(ph_uw,2)); % master phase doesn't effect plot, but better for ts plot
+                ph_uw=ph_uw - scla.ph_scla - repmat(scla.C_ps_uw,1,size(ph_uw,2)); % reference phase doesn't effect plot, but better for ts plot
             else
                  ph_uw=ph_uw - scla.ph_scla;
             end
@@ -1542,17 +1542,17 @@ switch(group_type)
         
         
 
-        if ts_flag==1 % master AOE doesn't effect v plot, but better for ts plot
+        if ts_flag==1 % reference AOE doesn't effect v plot, but better for ts plot
             if exist([sclaname '.mat'],'file')==2
                 scla=load(sclaname,'C_ps_uw');
                 if isfield(scla,'C_ps_uw')
                     ph_uw=ph_uw - repmat(scla.C_ps_uw,1,size(ph_uw,2));
                     clear scla
                 else
-                   fprintf('Master atmosphere is not subtracted \n') 
+                   fprintf('reference atmosphere is not subtracted \n') 
                 end
             else
-               fprintf('Master atmosphere is not subtracted \n') 
+               fprintf('reference atmosphere is not subtracted \n') 
             end
         end
 
@@ -1560,13 +1560,13 @@ switch(group_type)
         ref_ps=ps_setref;
         
 %AH2CHECK 
-% % % %         if unwrap_ifg_index(1)~=ps.master_ix & unwrap_ifg_index(end)~=ps.master_ix
-% % % %             unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.master_ix); % need to include it if not ifgs either side of master
+% % % %         if unwrap_ifg_index(1)~=ps.reference_ix & unwrap_ifg_index(end)~=ps.reference_ix
+% % % %             unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.reference_ix); % need to include it if not ifgs either side of reference
 % % % %         end
-        %%%% change to always remove the master, not sure why to keep
-        %%%% master in for first/last acquisition as the covariance matrix would
-        %%%% be having a zeros row and column at master_ix
-        unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.master_ix);
+        %%%% change to always remove the reference, not sure why to keep
+        %%%% reference in for first/last acquisition as the covariance matrix would
+        %%%% be having a zeros row and column at reference_ix
+        unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.reference_ix);
         
         if ~isempty(ifg_list)
             unwrap_ifg_index=intersect(unwrap_ifg_index,ifg_list);
@@ -1577,8 +1577,8 @@ switch(group_type)
         
         %ph_uw=ph_uw-repmat(mean(ph_uw(ref_ps,:),1),n_ps,1);
         ph_uw=ph_uw-repmat(nanmean(ph_uw(ref_ps,:),1),n_ps,1);
-        % Each ifg has master APS - slave APS, including master 
-        % (where slave APS = master APS) so OK to include master in inversion
+        % Each ifg has reference APS - slave APS, including reference 
+        % (where slave APS = reference APS) so OK to include reference in inversion
         if strcmpi(small_baseline_flag,'y')
             phuwres=load(phuwsbresname,'sm_cov');
             if isfield(phuwres,'sm_cov');
@@ -1601,7 +1601,7 @@ switch(group_type)
             end
         end
 
-        G=[ones(size(day)),day-master_day]; 
+        G=[ones(size(day)),day-reference_day]; 
         lambda=getparm('lambda');
 
         if length(value_type)>4 & strcmpi(value_type(1:5),'vdrop') 
@@ -1613,7 +1613,7 @@ switch(group_type)
             end
         else     
             m=lscov(G,double(ph_uw'),sm_cov);
-            ph_all=-m(2,:)'*365.25/4/pi*lambda*1000; % m(1,:) is master APS + mean deviation from model
+            ph_all=-m(2,:)'*365.25/4/pi*lambda*1000; % m(1,:) is reference APS + mean deviation from model
         end
 
         try
@@ -1809,7 +1809,7 @@ switch(group_type)
         pm=load(pmname);
         ph_all=pm.ph_patch./abs(pm.ph_patch);
         if n_ifg~=size(ph_all,2)
-            ph_all=[ph_all(:,1:ps.master_ix-1),zeros(ps.n_ps,1),ph_all(:,ps.master_ix:end)];
+            ph_all=[ph_all(:,1:ps.reference_ix-1),zeros(ps.n_ps,1),ph_all(:,ps.reference_ix:end)];
         end
         clear pm
         if ref_ifg~=0
@@ -1940,7 +1940,7 @@ if isreal(ph_all)
             ph_disp=ph_disp-repmat(ph_all(:,ref_ifg),1,size(ph_disp,2));
         end
     else
-        ref_ifg=master_ix;
+        ref_ifg=reference_ix;
     end
     
     
@@ -1970,7 +1970,7 @@ if isreal(ph_all)
     end
 else
     if ref_ifg==0
-        ref_ifg=master_ix;
+        ref_ifg=reference_ix;
     elseif ref_ifg==-1
         ph_disp=ph_disp.*conj([ph_disp(:,1),ph_disp(:,1:end-1)]);
     end
@@ -2043,7 +2043,7 @@ else
                     keyboard 
                 else                   
                     % checking if there is data for this interferogram
-                    loadname = [ext_data_path filesep  datestr(ps.day(i,1),'yyyymmdd') '_' datestr(ps.master_day,'yyyymmdd') '.mat'];
+                    loadname = [ext_data_path filesep  datestr(ps.day(i,1),'yyyymmdd') '_' datestr(ps.reference_day,'yyyymmdd') '.mat'];
                 end
  
             else
