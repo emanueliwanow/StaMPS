@@ -1,5 +1,5 @@
 function []=ps_calc_scla(use_small_baselines,coest_mean_vel)
-% PS_CALC_SCLA calculate SCLA and master atmosphere & orbit error
+% PS_CALC_SCLA calculate SCLA and reference atmosphere & orbit error
 %    PS_CALC_SCLA(USE_SMALL_BASELINES) Set USE_SMALL_BASELINES to 1 
 %    to use small baseline interferograms
 %
@@ -17,13 +17,13 @@ function []=ps_calc_scla(use_small_baselines,coest_mean_vel)
 %   08/2010 AH: use recalc_index correctly in small baseline case
 %   08/2010 AH: use mean bperp value
 %   11/2010 AH: replace recalc_index with scla_drop_index
-%   01/2012 AH: use short time sep ifgs for single master SCLA calc
+%   01/2012 AH: use short time sep ifgs for single reference SCLA calc
 %   07/2014 AH: remove Rank Deficient warning 
 %   09/2015 DB: Include TRAIN support
 %   09/2015 DB/EH: Debug nans, deramping fix using script ps_deramp
-%   09/2016 AH: Drop master from single master baseline calc for SB
+%   09/2016 AH: Drop reference from single reference baseline calc for SB
 %   06/2017 DB: include stamps_save for larger variables
-%   09/2017 DB: drop_master_ix is not defined, fix this
+%   09/2017 DB: drop_reference_ix is not defined, fix this
 %   ================================================================
 logit;
 logit(sprintf('Estimating spatially-correlated look angle error...'),2)
@@ -89,7 +89,7 @@ if exist([bpname,'.mat'],'file')
 else
     bperp=ps.bperp;
     if ~strcmpi(small_baseline_flag,'y')
-       bperp=bperp([1:ps.master_ix-1,ps.master_ix+1:end]);
+       bperp=bperp([1:ps.reference_ix-1,ps.reference_ix+1:end]);
     end
     bp.bperp_mat=repmat(bperp',ps.n_ps,1);
 end
@@ -170,14 +170,14 @@ if use_small_baselines==0
         if isfield(uw,'unwrap_ifg_index_sm')
             unwrap_ifg_index=setdiff(uw.unwrap_ifg_index_sm,scla_drop_index);
         end
-        unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.master_ix);
+        unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.reference_ix);
 
         G=G(:,unwrap_ifg_index);
         bperp_some=[G\double(bp.bperp_mat')]';
         bperp_mat(:,unwrap_ifg_index)=bperp_some;
         clear bperp_some
     else
-        bperp_mat=[bp.bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.master_ix:end)];
+        bperp_mat=[bp.bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.reference_ix:end)];
     end
     day=diff(ps.day(unwrap_ifg_index));
     ph=double(diff(uw.ph_uw(:,unwrap_ifg_index),[],2)); % sequential dph, to reduce influence of defo
@@ -260,11 +260,11 @@ end
 ph_scla=repmat(K_ps_uw,1,size(bperp_mat,2)).*bperp_mat;
 
 if use_small_baselines==0
-    unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.master_ix);
+    unwrap_ifg_index=setdiff(unwrap_ifg_index,ps.reference_ix);
     if coest_mean_vel==0
         C_ps_uw=mean(uw.ph_uw(:,unwrap_ifg_index)-ph_scla(:,unwrap_ifg_index),2);
     else
-        G=[ones(length(unwrap_ifg_index),1),ps.day(unwrap_ifg_index)-ps.day(ps.master_ix)];
+        G=[ones(length(unwrap_ifg_index),1),ps.day(unwrap_ifg_index)-ps.day(ps.reference_ix)];
         m=lscov(G,[uw.ph_uw(:,unwrap_ifg_index)-ph_scla(:,unwrap_ifg_index)]',ifg_vcm(unwrap_ifg_index,unwrap_ifg_index));
         C_ps_uw=m(1,:)';
     end
