@@ -1,23 +1,23 @@
 function [ph_uw,msd]=uw_3d(ph,xy,day,ifgday_ix,bperp,options)
-%UW_3D unwrap phase time series (single or multiple master)
+%UW_3D unwrap phase time series (single or multiple reference)
 %   PH_UW = UW_3D(PH,XY,DAY,IFGDAY_IX,BPERP,OPTIONS)
 %
 %   PH  = N x M matrix of wrapped phase values (real phase or complex phasor)
 %        where N is number of pixels and M is number of interferograms
 %   XY  = N x 2 matrix of coordinates in metres
 %        (optional extra column, in which case first column is ignored)
-%   DAY = vector of image acquisition dates in days, relative to master
-%   IFGDAY_IX = M x 2 matrix giving index to master and slave date in DAY
+%   DAY = vector of image acquisition dates in days, relative to reference
+%   IFGDAY_IX = M x 2 matrix giving index to reference and slave date in DAY
 %        for each interferogram 
 %   BPERP  = M x 1 vector giving perpendicular baselines 
 %   OPTIONS structure optionally containing following fields:
 %      la_flag    = look angle error estimation flag (def='y')
 %      scf_flag   = spatial cost function estimation flag (def='y')
-%      master_day = serial date number of master (used for info msg only, def=0)
+%      reference_day = serial date number of reference (used for info msg only, def=0)
 %      grid_size  = size of grid in m to resample data to (def=5)
 %      prefilt_win = size of prefilter window in resampled grid cells (def=16)
 %      time_win   = size of time filter window in days (def=365)
-%      unwrap_method (def='3D' for single master, '3D_FULL' otherwise)
+%      unwrap_method (def='3D' for single reference, '3D_FULL' otherwise)
 %      goldfilt_flag = Goldstein filtering, 'y' or 'n' (def='n')
 %      gold_alpha    = alpha value for Goldstein filter (def=0.8)
 %      lowfilt_flag  = Low pass filtering, 'y' or 'n' (def='n')
@@ -53,19 +53,19 @@ end
 
 %if isempty(ifgday_ix) | length(unique(ifgday_ix(:,1)))==1
 if isempty(ifgday_ix) 
-    single_master_flag=1;
+    single_reference_flag=1;
 else
-    single_master_flag=0;
+    single_reference_flag=0;
 end
 
-valid_options={'la_flag','scf_flag','master_day','grid_size','prefilt_win','time_win','unwrap_method','goldfilt_flag','lowfilt_flag','gold_alpha','n_trial_wraps','temp','n_temp_wraps','max_bperp_for_temp_est','variance','ph_uw_predef'};
+valid_options={'la_flag','scf_flag','reference_day','grid_size','prefilt_win','time_win','unwrap_method','goldfilt_flag','lowfilt_flag','gold_alpha','n_trial_wraps','temp','n_temp_wraps','max_bperp_for_temp_est','variance','ph_uw_predef'};
 invalid_options=setdiff(fieldnames(options),valid_options);
 if length(invalid_options)>0
     error(['"',invalid_options{1}, '" is an invalid option'])
 end
 
-if ~isfield(options,'master_day')
-    options.master_day=0;
+if ~isfield(options,'reference_day')
+    options.reference_day=0;
 end
 
 if ~isfield(options,'grid_size')
@@ -81,7 +81,7 @@ if ~isfield(options,'time_win')
 end
 
 if ~isfield(options,'unwrap_method')
-    if single_master_flag==1
+    if single_reference_flag==1
         options.unwrap_method='3D';
     else
         options.unwrap_method='3D_FULL';
@@ -155,7 +155,7 @@ end
 uw_grid_wrapped(ph,xy,options.grid_size,options.prefilt_win,options.goldfilt_flag,options.lowfilt_flag,options.gold_alpha,options.ph_uw_predef);
 clear ph
 uw_interp;
-%if single_master_flag==1
+%if single_reference_flag==1
 %    uw_unwrap_space_time(day,options.unwrap_method,options.time_win,options.master_day,options.la_flag,bperp,options.n_trial_wraps,options.prefilt_win,options.scf_flag,options.temp,options.n_temp_wraps);
 %else
     uw_sb_unwrap_space_time(day,ifgday_ix,options.unwrap_method,options.time_win,options.la_flag,bperp,options.n_trial_wraps,options.prefilt_win,options.scf_flag,options.temp,options.n_temp_wraps,options.max_bperp_for_temp_est);
