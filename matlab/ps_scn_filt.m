@@ -4,7 +4,7 @@ function []=ps_scn_filt()
 %   Andy Hooper, June 2006
 %
 %   =======================================================================
-%   11/2006 AH: Error corrected that was leaving master in temporal smoothing
+%   11/2006 AH: Error corrected that was leaving reference in temporal smoothing
 %   04/2007 AH: Added 64-bit machine compatibility
 %   05/2007 AH: Spatially correlated look angle error added  
 %   02/2010 AH: Replace unwrap_ifg_index with drop_ifg_index
@@ -40,7 +40,7 @@ else
 end
 
 day=ps.day(unwrap_ifg_index);
-master_ix=sum(ps.master_day>ps.day)+1;
+reference_ix=sum(ps.reference_day>ps.day)+1;
 n_ifg=length(unwrap_ifg_index);
 n_ps=ps.n_ps;
 
@@ -117,13 +117,13 @@ fprintf('   low-pass filtering pixel-pairs in time...\n')
 for i1=1:n_ifg
     time_diff_sq=(day(i1)-day)'.^2;
     weight_factor=exp(-time_diff_sq/2/time_win^2);
-    weight_factor(master_ix)=0; % leave out master
+    weight_factor(reference_ix)=0; % leave out reference
     weight_factor=weight_factor/sum(weight_factor);
     dph_lpt(:,i1)=sum(dph.*repmat(weight_factor,n_edges,1),2);
 end
 
 
-dph_hpt=dph-dph_lpt;  % leaves master APS - slave APS - slave noise (+ residue master noise)
+dph_hpt=dph-dph_lpt;  % leaves reference APS - slave APS - slave noise (+ residue reference noise)
 
 ph_hpt=zeros(n_ps-1,n_ifg);
 ref_ix=1;
@@ -196,7 +196,7 @@ end
 ph_scn=ph_scn-repmat(ph_scn(1,:),n_ps,1); % re-ref to 1st PS
 ph_scn_slave=zeros(size(uw.ph_uw));
 ph_scn_slave(:,unwrap_ifg_index)=ph_scn;
-ph_scn_slave(:,master_ix)=0;
+ph_scn_slave(:,reference_ix)=0;
 
 save(scnname,'ph_scn_slave','ph_hpt','ph_ramp')    
 logit(1);
