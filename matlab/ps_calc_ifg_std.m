@@ -32,13 +32,13 @@ else
 end
 
 n_ps=length(ps.xy);
-master_ix=sum(ps.master_day>ps.day)+1;
+reference_ix=sum(ps.reference_day>ps.day)+1;
 
 if strcmpi(small_baseline_flag,'y')
     ph_diff=angle(ph.*conj(pm.ph_patch).*exp(-j*(repmat(pm.K_ps,1,ps.n_ifg).*bp.bperp_mat)));    
 else
-    bperp_mat=[bp.bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.master_ix:end)];
-    ph_patch=[pm.ph_patch(:,1:master_ix-1),ones(n_ps,1),pm.ph_patch(:,master_ix:end)];
+    bperp_mat=[bp.bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.reference_ix:end)];
+    ph_patch=[pm.ph_patch(:,1:reference_ix-1),ones(n_ps,1),pm.ph_patch(:,reference_ix:end)];
     ph_diff=angle(ph.*conj(ph_patch).*exp(-j*(repmat(pm.K_ps,1,ps.n_ifg).*bperp_mat+repmat(pm.C_ps,1,ps.n_ifg))));
 end
 
