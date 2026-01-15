@@ -37,7 +37,7 @@ SHELL	=	/bin/sh
 INSTALL_DIR =	../bin
 
 ### compiler
-CC 	=	g++
+CC 	=	g++-7
 
 ### Compilation flags
 CFLAGS	=	-O3 -std=c++11
