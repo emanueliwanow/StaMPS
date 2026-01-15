@@ -91,13 +91,13 @@ end
 bperp=ps.bperp;
 n_ifg=ps.n_ifg;
 if ~strcmpi(small_baseline_flag,'y')
-    master_ix=sum(ps.master_day>ps.day)+1;
-    no_master_ix=setdiff([1:ps.n_ifg],ps.master_ix);
-    ifg_index=setdiff(ifg_index,ps.master_ix);
-    ifg_index(ifg_index>master_ix)=ifg_index(ifg_index>master_ix)-1;
-    ph=ph(:,no_master_ix);
-    bperp=bperp(no_master_ix);
-    n_ifg=length(no_master_ix);
+    reference_ix=sum(ps.reference_day>ps.day)+1;
+    no_reference_ix=setdiff([1:ps.n_ifg],ps.reference_ix);
+    ifg_index=setdiff(ifg_index,ps.reference_ix);
+    ifg_index(ifg_index>reference_ix)=ifg_index(ifg_index>reference_ix)-1;
+    ph=ph(:,no_reference_ix);
+    bperp=bperp(no_reference_ix);
+    n_ifg=length(no_reference_ix);
 end
 n_ps=ps.n_ps;
 xy=ps.xy;
