@@ -99,8 +99,8 @@ if strcmpi(small_baseline_flag,'y')
     ifgday_ix=ps.ifgday_ix;
     xy=ps.xy;
 else
-    ph=ph(:,[1:ps.master_ix-1,ps.master_ix+1:end]);
-    bperp=ps.bperp([1:ps.master_ix-1,ps.master_ix+1:end]);
+    ph=ph(:,[1:ps.reference_ix-1,ps.reference_ix+1:end]);
+    bperp=ps.bperp([1:ps.reference_ix-1,ps.reference_ix+1:end]);
     n_ifg=ps.n_ifg-1;
     n_ps=ps.n_ps;
     xy=ps.xy;
