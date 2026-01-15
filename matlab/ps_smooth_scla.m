@@ -123,11 +123,11 @@ if use_small_baselines==0
              G(i,ps.ifgday_ix(i,1))=-1;
              G(i,ps.ifgday_ix(i,2))=1;
         end
-        G=G(:,[1:ps.master_ix-1,ps.master_ix+1:end]);
+        G=G(:,[1:ps.reference_ix-1,ps.reference_ix+1:end]);
         bperp_mat=[G\double(bp.bperp_mat')]';
-        bperp_mat=[bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bperp_mat(:,ps.master_ix:end)];
+        bperp_mat=[bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bperp_mat(:,ps.reference_ix:end)];
     else
-        bperp_mat=[bp.bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.master_ix:end)];
+        bperp_mat=[bp.bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.reference_ix:end)];
     end
 else
     bperp_mat=bp.bperp_mat;
