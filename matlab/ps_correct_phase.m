@@ -36,16 +36,16 @@ end
 
 K_ps=single(pm.K_ps);
 C_ps=single(pm.C_ps);
-master_ix=sum(ps.master_day>ps.day)+1;
+reference_ix=sum(ps.reference_day>ps.day)+1;
 
 if strcmpi(small_baseline_flag,'y')
     %ph_rc=ph.*exp(-j*(repmat(K_ps,1,ps.n_ifg).*bp.bperp_mat));  % subtract range error 
     ph_rc=ph.*exp(-j*(repmat(K_ps,1,ps.n_ifg).*bp.bperp_mat));  % subtract range error 
     save(rcname,'ph_rc'); 
 else    
-    bperp_mat=[bp.bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.master_ix:end)];
-    ph_rc=ph.*exp(-j*(repmat(K_ps,1,ps.n_ifg).*bperp_mat+repmat(C_ps,1,ps.n_ifg)));  % subtract range error and master noise
-    ph_reref=[single(pm.ph_patch(:,1:master_ix-1)),ones(ps.n_ps,1,'single'),single(pm.ph_patch(:,master_ix:end))];
+    bperp_mat=[bp.bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.reference_ix:end)];
+    ph_rc=ph.*exp(-j*(repmat(K_ps,1,ps.n_ifg).*bperp_mat+repmat(C_ps,1,ps.n_ifg)));  % subtract range error and reference noise
+    ph_reref=[single(pm.ph_patch(:,1:reference_ix-1)),ones(ps.n_ps,1,'single'),single(pm.ph_patch(:,reference_ix:end))];
     save(rcname,'ph_rc','ph_reref'); 
 end
 
