@@ -55,13 +55,13 @@ if exist(['./',bpname,'.mat'],'file')
 else
     bperp=ps.bperp;
     if ~strcmpi(small_baseline_flag,'y')
-       bperp=bperp([1:ps.master_ix-1,ps.master_ix+1:end]);
+       bperp=bperp([1:ps.reference_ix-1,ps.reference_ix+1:end]);
     end
     bp.bperp_mat=repmat(bperp',ps.n_ps,1);
 end
 
 if ~strcmpi(small_baseline_flag,'y') 
-    bperp_mat=[bp.bperp_mat(:,1:ps.master_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.master_ix:end)];
+    bperp_mat=[bp.bperp_mat(:,1:ps.reference_ix-1),zeros(ps.n_ps,1,'single'),bp.bperp_mat(:,ps.reference_ix:end)];
 else
     bperp_mat=bp.bperp_mat;
 end
@@ -71,7 +71,7 @@ if strcmpi(unwrap_patch_phase,'y')
     ph_w=pm.ph_patch./abs(pm.ph_patch);
     clear pm
     if ~strcmpi(small_baseline_flag,'y')
-        ph_w=[ph_w(:,1:ps.master_ix-1),ones(ps.n_ps,1),ph_w(:,ps.master_ix:end)];
+        ph_w=[ph_w(:,1:ps.reference_ix-1),ones(ps.n_ps,1),ph_w(:,ps.reference_ix:end)];
     end
 else
     rc=load(rcname);
@@ -93,7 +93,7 @@ ph_w(ix)=ph_w(ix)./abs(ph_w(ix)); % normalize, to avoid high freq artifacts bein
 scla_subtracted_sw=0;
 ramp_subtracted_sw=0;
 
-options=struct('master_day',ps.master_day);
+options=struct('reference_day',ps.reference_day);
 unwrap_hold_good_values=getparm('unwrap_hold_good_values',1);
 if ~strcmpi(small_baseline_flag,'y') | ~exist(phuwname)
     unwrap_hold_good_values='n';
@@ -113,12 +113,12 @@ if unwrap_hold_good_values=='y'
 end
 
 if ~strcmpi(small_baseline_flag,'y') & exist([sclaname,'.mat'],'file') % PS
-    fprintf('   subtracting scla and master aoe...\n')
+    fprintf('   subtracting scla and reference aoe...\n')
     scla=load(sclaname);
     if size(scla.K_ps_uw,1)==ps.n_ps
       scla_subtracted_sw=1;
       ph_w=ph_w.*exp(-j*repmat(scla.K_ps_uw,1,ps.n_ifg).*bperp_mat); % subtract spatially correlated look angle error
-      ph_w=ph_w.*repmat(exp(-j*scla.C_ps_uw),1,ps.n_ifg); % subtract master APS
+      ph_w=ph_w.*repmat(exp(-j*scla.C_ps_uw),1,ps.n_ifg); % subtract reference APS
       if strcmpi(scla_deramp,'y') & isfield(scla,'ph_ramp') & size(scla.ph_ramp,1)==ps.n_ps
          ramp_subtracted_sw=1;
          ph_w=ph_w.*exp(-j*scla.ph_ramp); % subtract orbital ramps
@@ -215,15 +215,15 @@ if strcmpi(small_baseline_flag,'y')
     %options.lowfilt_flag='y';
     options.lowfilt_flag='n';
     ifgday_ix=ps.ifgday_ix;
-    day=ps.day-ps.master_day;
+    day=ps.day-ps.reference_day;
 else
     lowfilt_flag='n';
     %ifgday_ix=[];
-    ifgday_ix=[ones(ps.n_ifg,1)*ps.master_ix,[1:ps.n_ifg]'];
-    master_ix=sum(ps.master_day>ps.day)+1;
-    unwrap_ifg_index=setdiff(unwrap_ifg_index,master_ix); % leave master ifg (which is only noise) out
-    %day=ps.day(unwrap_ifg_index)-ps.master_day;
-    day=ps.day-ps.master_day;
+    ifgday_ix=[ones(ps.n_ifg,1)*ps.reference_ix,[1:ps.n_ifg]'];
+    reference_ix=sum(ps.reference_day>ps.day)+1;
+    unwrap_ifg_index=setdiff(unwrap_ifg_index,reference_ix); % leave reference ifg (which is only noise) out
+    %day=ps.day(unwrap_ifg_index)-ps.reference_day;
+    day=ps.day-ps.reference_day;
 end
 
 if unwrap_hold_good_values=='y'
@@ -248,10 +248,10 @@ if exist('msd_some','var')
 end
 
 if scla_subtracted_sw & ~strcmpi(small_baseline_flag,'y')
-    fprintf('Adding back SCLA and master AOE...\n')
+    fprintf('Adding back SCLA and reference AOE...\n')
     scla=load(sclaname);
     ph_uw=ph_uw+(repmat(scla.K_ps_uw,1,ps.n_ifg).*bperp_mat); % add back spatially correlated look angle error
-    ph_uw=ph_uw+repmat(scla.C_ps_uw,1,ps.n_ifg); % add back master APS
+    ph_uw=ph_uw+repmat(scla.C_ps_uw,1,ps.n_ifg); % add back reference APS
     if ramp_subtracted_sw
         ph_uw=ph_uw+scla.ph_ramp; % add back orbital ramps
     end
@@ -281,7 +281,7 @@ if strcmpi(unwrap_patch_phase,'y')
     ph_w=pm.ph_patch./abs(pm.ph_patch);
     clear pm
     if ~strcmpi(small_baseline_flag,'y')
-        ph_w=[ph_w(:,1:ps.master_ix-1),zeros(ps.n_ps,1),ph_w(:,ps.master_ix:end)];
+        ph_w=[ph_w(:,1:ps.reference_ix-1),zeros(ps.n_ps,1),ph_w(:,ps.reference_ix:end)];
     end
     rc=load(rcname);
     ph_uw=ph_uw+angle(rc.ph_rc.*conj(ph_w));
